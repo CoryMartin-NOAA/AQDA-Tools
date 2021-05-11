@@ -3,7 +3,8 @@
 # create a netCDF file that looks like a gaussian
 # netCDF GFS history file but contains data from
 # NASA GEOS-CF model output
-import netDF4 as nc
+import netCDF4 as nc
+import numpy as np
 import argparse
 
 def nasa2gfs(inputfile, gfsfile, outputfile, tracers):
@@ -17,7 +18,28 @@ def nasa2gfs(inputfile, gfsfile, outputfile, tracers):
     nx = len(ifile.dimensions['lon'])
     ny = len(ifile.dimensions['lat'])
     nz = len(ifile.dimensions['lev'])
-    print(nx,ny,nz)
+    # create dimensions
+    xdim = ofile.createDimension("grid_xt", nx)
+    ydim = ofile.createDimension("grid_yt", ny)
+    zdim = ofile.createDimension("pfull", nz)
+    zidim = ofile.createDimension("phalf", nz+1)
+    tdim = ofile.createDimension("time", None)
+    # open the GFS file to get variables, etc.
+    gfile = nc.Dataset(gfsfile)
+    # add all variables in the GFS file to the output file
+    for name,gfsvar in gfile.variables.items():
+        ofile.createVariable(name, gfsvar.dtype, gfsvar.dimensions)
+    # add all tracers specified to the output file
+    for t in tracers:
+        ofile.createVariable(t.lower(), "f4", ("time", "pfull", "grid_yt", "grid_xt"))
+    # add necessary global attributes to output file
+    ofile.ncnsto = np.int32(gfile.ncnsto + len(tracers))
+    ofile.im = np.int32(nx)
+    ofile.jm = np.int32(ny)
+    ofile.source = "FV3GFS"
+    ofile.grid = "gaussian"
+
+
 
 if __name__ == '__main__':
     # get command line arguments
