@@ -99,7 +99,8 @@ def nasa2gfs(inputfile, gfsfile, outputfile, tracers):
     xdataout[:] = lons
     ydataout[:] = lats
     # need to handle phalf, not in input file...
-    phalf = ak + bk * 1000.
+    phalf = ak + bk * 100000.
+    phalf = phalf / 100. # convert to hPa from Pa
     vdataout = ofile.variables['phalf']
     vdataout[:] = phalf
     # now add in the tracers
